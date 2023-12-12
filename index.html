@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Tetris</title>
+	<style>
+    	body {
+    		display: flex;
+    		justify-content: center;
+    		align-items: center;
+    		height: 100vh;
+    		margin: 0;
+    		background-color: #15191d;
+    	}
+    	canvas {
+    	  	border: 1px solid #fff;
+    		margin-right: 20px;
+		}
+  	</style>
+  	<script src="main.js"></script>
+</head>
+<body>
+	<button id="play"><b>PLAY TETRIS</b></button>
+	<audio id="music" controls hidden>
+		<source src="clar_tetris.wav" type="audio/wav">
+	</audio>
+	<canvas id="tetrisCanvas" width="300" height="600"></canvas>
+	<canvas id="nextBlockCanvas" width="100" height="100"></canvas>
+</body>
+</html>
+
