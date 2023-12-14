@@ -2,9 +2,11 @@ document.addEventListener("DOMContentLoaded", function () {
 const canvas = document.getElementById("tetrisCanvas");
 const nextBlockCanvas = document.getElementById("nextBlockCanvas");
 const btn = document.getElementById("play");
+const levelDiv = document.getElementById("level");
 const levelBar = document.getElementById("levelBar");
 const levelText = document.getElementById("levelText");
 const music = document.getElementById("music");
+const musicVolumeDiv = document.getElementById("volumeControl");
 const musicVolume = document.getElementById("volumeSlider");
 
 btn.addEventListener("click", play);
@@ -46,10 +48,10 @@ let updates;
 btn.style.display = "none";
 canvas.style.display = "";
 nextBlockCanvas.style.display = "";
-document.getElementById("level").style.display = "";
-document.getElementById("volumeControl").style.display = "";
+levelDiv.style.display = "";
+musicVolumeDiv.style.display = "";
 music.loop = true;
-music.volume = localStorage.getItem("musicVolume") || 0.5;
+music.volume = localStorage.getItem("musicVolume")/100 || 0.5;
 music.play();
 
 function saveHighScore() {
