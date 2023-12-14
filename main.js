@@ -2,10 +2,18 @@ document.addEventListener("DOMContentLoaded", function () {
 const canvas = document.getElementById("tetrisCanvas");
 const nextBlockCanvas = document.getElementById("nextBlockCanvas");
 const btn = document.getElementById("play");
+const levelBar = document.getElementById("levelBar");
+const levelText = document.getElementById("levelText");
+const music = document.getElementById("music");
+const musicVolume = document.getElementById("volumeSlider");
 
-canvas.style.display = "none";
-nextBlockCanvas.style.display = "none";
 btn.addEventListener("click", play);
+musicVolume.onchange = function(){
+    music.volume = musicVolume.value/100;
+    localStorage.setItem("musicVolume", musicVolume.value);
+}
+musicVolume.value =  localStorage.getItem("musicVolume") || 50;
+
 
 function play(){
 const ctx = canvas.getContext("2d");
@@ -32,15 +40,16 @@ let nextPiece;
 let nextPieceColor;
 let lastMoveFail = 0;
 let score = 0;
-let highScore = localStorage.getItem("tetrisHighScore") || 0;
-let music = document.getElementById("music");
+let highScore = localStorage.getItem("tetrisHighScore")/100 || 0;
 let updates;
 
 btn.style.display = "none";
 canvas.style.display = "";
 nextBlockCanvas.style.display = "";
+document.getElementById("level").style.display = "";
+document.getElementById("volumeControl").style.display = "";
 music.loop = true;
-music.volume = 0.5;
+music.volume = localStorage.getItem("musicVolume") || 0.5;
 music.play();
 
 function saveHighScore() {
@@ -153,6 +162,7 @@ function checkForLines() {
     // Check and clear completed lines
     for (let row = 0; row < ROWS; row++) 
         if (board[row].every((block) => block !== 0)) linesToClear.push(row);
+
     linesToClear.forEach((row)=>{
         board.splice(row, 1);
         board.unshift(Array(COLS).fill(0));
@@ -168,16 +178,16 @@ function checkForLines() {
         level=Math.floor(score/5)+2;
         clearInterval(updates);
         updates = setInterval(update, getUpdateSpeed(level));
-        console.log(getUpdateSpeed(level));
+        //console.log(getUpdateSpeed(level));
+        levelText.innerText = "Level: "+(level-1);
     }
+    levelBar.value = score%5;
 }
 
 function moveDown(y) {
-  // Move the current piece down one row
     if (canMove(0, y)) {
         currentPiece.forEach((block) => (block[1] += y));
     } else {
-        // Lock the piece in place and generate a new piece
         currentPiece.forEach((block) => {
             board[block[1]][block[0]] = currentPieceColor;
         });
