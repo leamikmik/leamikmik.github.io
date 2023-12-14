@@ -13,7 +13,7 @@ const nextBlockCtx = nextBlockCanvas.getContext("2d");
 const ROWS = 20;
 const COLS = 10;
 const BLOCK_SIZE = 30;
-const GAME_SPEED = 500; // ms
+let level = 2;
 let board = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -34,6 +34,8 @@ let lastMoveFail = 0;
 let score = 0;
 let highScore = localStorage.getItem("tetrisHighScore") || 0;
 let music = document.getElementById("music");
+let updates;
+
 btn.style.display = "none";
 canvas.style.display = "";
 nextBlockCanvas.style.display = "";
@@ -50,6 +52,10 @@ function drawSquare(x, y, color) {
 	ctx.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
 	ctx.strokeStyle = "#15191d";
 	ctx.strokeRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+}
+
+function getUpdateSpeed(level){
+    return Math.pow(0.8-((level-1)*0.007), level-1)*1000;
 }
 
 function drawNextBlock() {
@@ -131,31 +137,39 @@ function update() {
       saveHighScore();
     }
     draw();
-}
-
-function gameOver() {
-    alert("Game Over!");
-    startGame();
+    console.log(score);
 }
 
 function checkForGameOver() {
     // Check if any part of the current piece is outside the game boundaries or collides with existing blocks
     if (currentPiece.some((block) => block[1] >= ROWS || board[block[1]][block[0]] !== 0)) {
-        gameOver();
+        alert("Game Over!");
+        startGame();
   }
 }
 
 function checkForLines() {
+    let linesToClear = []
     // Check and clear completed lines
-    for (let row = ROWS - 1; row >= 0; row--) {
-        if (board[row].every((block) => block !== 0)) {
-        // Clear the line
+    for (let row = 0; row < ROWS; row++) 
+        if (board[row].every((block) => block !== 0)) linesToClear.push(row);
+    linesToClear.forEach((row)=>{
         board.splice(row, 1);
         board.unshift(Array(COLS).fill(0));
-        // Increase the score
-        score += 10;
+    });
+    switch(linesToClear.length){
+        case 1: score+=1; break;
+        case 2: score+=3; break;
+        case 3: score+=5; break;
+        case 4: score+=8; break;
+        default: score+=linesToClear.length; break;
     }
-  }
+    if((level-1)*5<=score){
+        level=Math.floor(score/5)+2;
+        clearInterval(updates);
+        updates = setInterval(update, getUpdateSpeed(level));
+        console.log(getUpdateSpeed(level));
+    }
 }
 
 function moveDown(y) {
@@ -173,7 +187,6 @@ function moveDown(y) {
 }
 
 function canMove(dx, dy) {
-    // Check if the current piece can be moved by (dx, dy) units
     return currentPiece.every(
         (block) =>
             block[0] + dx >= 0 &&
@@ -184,24 +197,19 @@ function canMove(dx, dy) {
 }
 
 function rotate() {
-    // Clone the current piece
     const rotatedPiece = JSON.parse(JSON.stringify(currentPiece));
-    // Rotate the cloned piece
     for (let i = 0; i < rotatedPiece.length; i++) {
         const x = rotatedPiece[i][0];
         const y = rotatedPiece[i][1];
-        // Perform a 90-degree rotation around the piece's center
         rotatedPiece[i][0] = currentPiece[0][0] + (y - currentPiece[0][1]);
         rotatedPiece[i][1] = currentPiece[0][1] - (x - currentPiece[0][0]);
     }
-    // Check if the rotated piece is valid, then apply the rotation
     if (isValidMove(rotatedPiece)) {
         currentPiece = rotatedPiece;
     }
 }
 
 function isValidMove(piece) {
-    // Check if the rotated piece is within the game boundaries and does not collide with existing blocks
     return piece.every(block =>
         block[0] >= 0 &&
         block[0] < COLS &&
@@ -225,12 +233,12 @@ function handleKeyPress(event) {
         break;
 
         case "ArrowUp":
-            // Code to rotate the current piece
             rotate();
         break;
 
         case "Control":
             moveDown(lastMoveFail-1);
+            moveDown(1);
         break;
     }
     draw();
@@ -255,13 +263,10 @@ function generatePiece() {
         [[0, 1], [1, 0], [1, 1], [2, 1]], // T
         [[0, 0], [1, 0], [1, 1], [2, 1]]  // Z
     ];
-    // Randomly select a piece
     const randomIndex = Math.floor(Math.random() * pieces.length);
     const selectedPiece = pieces[randomIndex];  
-    // Initial position for the piece
-    const initialX = Math.floor((COLS - 4) / 2); // Center the piece horizontally
-    const initialY = 0; // Start at the top 
-    // Adjust the piece blocks based on the initial position
+    const initialX = Math.floor((COLS - 4) / 2);
+    const initialY = 0;
     nextPieceColor = colors[randomIndex];
     return selectedPiece.map(block => [block[0] + initialX, block[1] + initialY]);
 }
@@ -271,9 +276,7 @@ function startGame() {
     currentPieceColor = nextPieceColor;
     nextPiece = generatePiece();
     score = 0;
-    // Set up game loop using setInterval
-    setInterval(update, GAME_SPEED);
-    // Set up keyboard event listener
+    updates = setInterval(update, getUpdateSpeed(2));
     document.addEventListener("keydown", handleKeyPress);
 }
 
