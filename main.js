@@ -1,3 +1,7 @@
+function exit(){
+    window.location.href = "https://google.com";
+}
+
 document.addEventListener("DOMContentLoaded", function () {
 const canvas = document.getElementById("tetrisCanvas");
 const nextBlockCanvas = document.getElementById("nextBlockCanvas");
@@ -8,16 +12,20 @@ const levelText = document.getElementById("levelText");
 const music = document.getElementById("music");
 const musicVolumeDiv = document.getElementById("volumeControl");
 const musicVolume = document.getElementById("volumeSlider");
+const gameOverScreen = document.getElementById("gameOver");
+const endScore = document.getElementById("endScore");
+const endHighScore = document.getElementById("endHighScore");
 
+document.getElementById("restart").addEventListener("click", play);
 btn.addEventListener("click", play);
 musicVolume.onchange = function(){
     music.volume = musicVolume.value/100;
     localStorage.setItem("musicVolume", musicVolume.value);
 }
 musicVolume.value =  localStorage.getItem("musicVolume") || 50;
+music.loop = true;
+music.volume = localStorage.getItem("musicVolume")==null ? 0.5 : localStorage.getItem("musicVolume");
 
-
-function play(){
 const ctx = canvas.getContext("2d");
 const nextBlockCtx = nextBlockCanvas.getContext("2d");
 const ROWS = 20;
@@ -42,17 +50,20 @@ let nextPiece;
 let nextPieceColor;
 let lastMoveFail = 0;
 let score = 0;
-let highScore = localStorage.getItem("tetrisHighScore")/100 || 0;
+let highScore = localStorage.getItem("tetrisHighScore") || 0;
 let updates;
 
-btn.style.display = "none";
-canvas.style.display = "";
-nextBlockCanvas.style.display = "";
-levelDiv.style.display = "";
-musicVolumeDiv.style.display = "";
-music.loop = true;
-music.volume = localStorage.getItem("musicVolume")/100 || 0.5;
-music.play();
+function play(){
+    gameOverScreen.style.display = "none";
+    btn.style.display = "none";
+    canvas.style.display = "";
+    nextBlockCanvas.style.display = "";
+    levelDiv.style.display = "";
+    musicVolumeDiv.style.display = "";
+    music.play();
+    startGame();
+    drawNextBlock();
+}
 
 function saveHighScore() {
 	localStorage.setItem("tetrisHighScore", highScore);
@@ -70,22 +81,17 @@ function getUpdateSpeed(level){
 }
 
 function drawNextBlock() {
-	// Clear the next block canvas
 	nextBlockCtx.clearRect(0, 0, nextBlockCanvas.width, nextBlockCanvas.height);
-    // Barva ozadja
     nextBlockCtx.fillStyle = "#212529";
     nextBlockCtx.fillRect(0, 0, nextBlockCanvas.width, nextBlockCanvas.height);
-	// Find the center of the next piece
 	const centerX = (Math.max(...nextPiece.map((block) => block[0])) + Math.min(...nextPiece.map((block) => block[0]))) / 2;
 	const centerY = (Math.max(...nextPiece.map((block) => block[1])) + Math.min(...nextPiece.map((block) => block[1]))) / 2;
-	// Calculate the offset to center the piece in the canvas
-	const offsetX = Math.floor((nextBlockCanvas.width - 5 * 25) / 2); // Assuming max width of a piece is 5
-	const offsetY = Math.floor((nextBlockCanvas.height - 5 * 25) / 2); // Assuming max height of a piece is 5
-	// Draw the next block preview
+	const offsetX = Math.floor((nextBlockCanvas.width - 5 * 25) / 2);
+	const offsetY = Math.floor((nextBlockCanvas.height - 5 * 25) / 2);
 	nextPiece.forEach((block) => {
 		nextBlockCtx.fillStyle = nextPieceColor;
-		const x = (block[0] - centerX + 2) * 25 + offsetX; // Adjust the +2 based on the piece size and center
-		const y = (block[1] - centerY + 2) * 25 + offsetY; // Adjust the +2 based on the piece size and center
+		const x = (block[0] - centerX + 2) * 25 + offsetX; 
+		const y = (block[1] - centerY + 2) * 25 + offsetY;
 		nextBlockCtx.fillRect(x, y, 25, 25);
         nextBlockCtx.strokeStyle = "#000";
         nextBlockCtx.strokeRect(x, y, 25, 25);
@@ -96,20 +102,15 @@ function drawNextBlock() {
 }	
 
 function spawnNewPiece() {
-    // Use the same piece generated for the preview
     currentPiece = nextPiece;
     currentPieceColor = nextPieceColor;
-    // Generate a new piece for the next preview
     nextPiece = generatePiece();
 }
 
 function draw() {
-    // Clear the canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    // Barva ozadja
     ctx.fillStyle = "#212529";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    // Draw the board
     for (let row = 0; row < ROWS; row++) {
       for (let col = 0; col < COLS; col++) {
         if (board[row][col] !== 0) {
@@ -120,7 +121,6 @@ function draw() {
         }
       }
     }
-    // Draw the current piece
     if (currentPiece) {
         for(let y = ROWS; y > 0; y--) lastMoveFail = !canMove(0, y)? y: lastMoveFail;
         currentPiece.forEach((block) => {
@@ -130,38 +130,33 @@ function draw() {
             });
         }
 
-    // Draw score and high score
     ctx.fillStyle = "#fff";
     ctx.font = "20px Arial";
     ctx.fillText("Score: " + score, 10, 30);
-    ctx.fillText("High Score: " + highScore, 10, 60);
 }
 
 function update() {
-    // Code to update the game state (e.g., move the current piece, check for collisions, clear lines, etc.)
     moveDown(1);
     checkForLines();
     checkForGameOver();
-    // Code to update the score and high score
     if (score > highScore) {
       highScore = score;
       saveHighScore();
     }
     draw();
-    console.log(score);
 }
 
 function checkForGameOver() {
-    // Check if any part of the current piece is outside the game boundaries or collides with existing blocks
     if (currentPiece.some((block) => block[1] >= ROWS || board[block[1]][block[0]] !== 0)) {
-        alert("Game Over!");
-        startGame();
+        clearInterval(updates);
+        gameOverScreen.style.display = "";
+        endScore.innerText = "Score: "+score;
+        endHighScore.innerText = "Highscore: "+highScore;
   }
 }
 
 function checkForLines() {
     let linesToClear = []
-    // Check and clear completed lines
     for (let row = 0; row < ROWS; row++) 
         if (board[row].every((block) => block !== 0)) linesToClear.push(row);
 
@@ -180,7 +175,6 @@ function checkForLines() {
         level=Math.floor(score/5)+2;
         clearInterval(updates);
         updates = setInterval(update, getUpdateSpeed(level));
-        //console.log(getUpdateSpeed(level));
         levelText.innerText = "Level: "+(level-1);
     }
     levelBar.value = score%5;
@@ -282,17 +276,16 @@ function generatePiece() {
     nextPieceColor = colors[randomIndex];
     return selectedPiece.map(block => [block[0] + initialX, block[1] + initialY]);
 }
+
 function startGame() {
     board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
     currentPiece = generatePiece();
     currentPieceColor = nextPieceColor;
     nextPiece = generatePiece();
     score = 0;
+    level = 0;
     updates = setInterval(update, getUpdateSpeed(2));
     document.addEventListener("keydown", handleKeyPress);
+    levelText.value = "Level: 1";
 }
-
-startGame();
-drawNextBlock();
-
-}});
+});
