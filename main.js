@@ -1,23 +1,25 @@
 function exit(){
-    window.location.href = "https://google.com";
+    window.location.reload();
 }
 
 document.addEventListener("DOMContentLoaded", function () {
+const settings = document.getElementById("settings");
 const canvas = document.getElementById("tetrisCanvas");
 const nextBlockCanvas = document.getElementById("nextBlockCanvas");
-const btn = document.getElementById("play");
+const startScreen = document.getElementById("startScreen");
 const levelDiv = document.getElementById("level");
 const levelBar = document.getElementById("levelBar");
 const levelText = document.getElementById("levelText");
 const music = document.getElementById("music");
-const musicVolumeDiv = document.getElementById("volumeControl");
 const musicVolume = document.getElementById("volumeSlider");
 const gameOverScreen = document.getElementById("gameOver");
 const endScore = document.getElementById("endScore");
 const endHighScore = document.getElementById("endHighScore");
 
 document.getElementById("restart").addEventListener("click", play);
-btn.addEventListener("click", play);
+document.getElementById("play").addEventListener("click", play);
+document.getElementById("openSet").addEventListener("click", openSettings);
+document.getElementById("closeSet").addEventListener("click", closeSettings);
 musicVolume.onchange = function(){
     music.volume = musicVolume.value/100;
     localStorage.setItem("musicVolume", musicVolume.value);
@@ -52,14 +54,37 @@ let lastMoveFail = 0;
 let score = 0;
 let highScore = localStorage.getItem("tetrisHighScore") || 0;
 let updates;
+let active = false;
+let controls = {
+    "rotate" : "ArrowUp",
+    "left" : "ArrowLeft",
+    "right" : "ArrowRight",
+    "down" : "ArrowDown",
+    "softDrop" : "Alt",
+    "hardDrop" : "Control"
+} || JSON.parse(localStorage.getItem("controls"));
+
+function openSettings(){
+    let i = 3;
+    for(let key in controls){
+        settings.children[i].children[1].innerText = controls[key];
+        i++;
+    }
+    settings.style.display="";
+}
+
+function closeSettings(){
+    settings.style.display="none";
+    localStorage.setItem("controls", JSON.stringify(controls));
+}
 
 function play(){
+    active = true;
     gameOverScreen.style.display = "none";
-    btn.style.display = "none";
+    startScreen.style.display = "none";
     canvas.style.display = "";
     nextBlockCanvas.style.display = "";
     levelDiv.style.display = "";
-    musicVolumeDiv.style.display = "";
     music.play();
     startGame();
     drawNextBlock();
@@ -152,6 +177,7 @@ function checkForGameOver() {
         gameOverScreen.style.display = "";
         endScore.innerText = "Score: "+score;
         endHighScore.innerText = "Highscore: "+highScore;
+        active = false;
   }
 }
 
@@ -225,26 +251,35 @@ function isValidMove(piece) {
     );
 }
 function handleKeyPress(event) {
+    //console.log(event.key);
+    if(active || event.key=="Escape")
     switch (event.key) {
-        case "ArrowLeft":
+        case controls["left"]:
             if (canMove(-1, 0)) currentPiece.forEach((block) => (block[0] -= 1));
         break;
 
-        case "ArrowRight":
+        case controls["right"]:
             if (canMove(1, 0)) currentPiece.forEach((block) => (block[0] += 1));
         break;
 
-        case "ArrowDown":
+        case controls["down"]:
             moveDown(1);
         break;
 
-        case "ArrowUp":
+        case controls["rotate"]:
             rotate();
         break;
-
-        case "Control":
+        case controls["softDrop"]:
+            moveDown(lastMoveFail-1);
+        break;
+        case controls["hardDrop"]:
             moveDown(lastMoveFail-1);
             moveDown(1);
+        break;
+        case "Escape":
+            if(active) clearInterval(updates);
+            else updates = setInterval(update, getUpdateSpeed(level));
+            active = !active;
         break;
     }
     draw();
