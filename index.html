@@ -39,6 +39,8 @@
 		#gameOver{
 			width: 300px;
 			height: 150px;
+		}
+		.menu{
 			border-radius: 25px;
 			position: absolute;
 			margin: auto auto;
@@ -61,18 +63,19 @@
 		    text-align: center;
 		}
 		#settings{
-			border-radius: 25px;
-			position: absolute;
 			height: 450px;
 			width: 250px;
-			background-color: #313b4b;
 		}
 		#settings *{
 			margin-top: auto;
 		}
-		#settings label{
+		#settings label, #pauseMenu label{
 			text-align: left;
 			margin-left: 15px;
+		}
+		#pauseMenu{
+			width: 250px;
+			height: 120px;
 		}
   	</style>
   	<script src="main.js" type="text/javascript"></script>
@@ -92,45 +95,56 @@
 	</div>
 	<canvas id="nextBlockCanvas" width="100" height="100" style="display: none; margin-left: 20px;"></canvas>
 
-	<div id="settings" style="display: none;">
+	<div id="pauseMenu" class="menu" style="display: none;">
+		<b style="margin-top: 5px; font-size: 30px;">PAUSED</b>
+		<div class="rowAlign">
+			<label id="score">Score: 20</label>
+			<label id="highscore">Highscore: 10</label>
+		</div>
+		<div class="rowAlign" style="margin-bottom: 0px;">
+			<button id="resume"><b>Resume</b></button>
+			<button id="pauseSet"><b>Settings</b></button>
+		</div>
+	</div>
+
+	<div id="settings" class="menu" style="display: none;">
 		<b style="margin-top: 5px; font-size: 30px;">SETTINGS</b>
 		<div class="rowAlign">
 			<label for="volumeSlider">Music volume:</label>
         	<input id="volumeSlider" type="range" min="0" max="100" step="1" value="50">
     	</div>
-		<b style="margin-top: 10px;" id="playerTag">Player 1:</b>
+		<b style="margin-top: 10px; visibility: hidden;" id="playerTag">Player 1:</b>
 		<div class="rowAlign">
 			<label>Rotate: </label>
-			<button>Up</button>
+			<button>Default</button>
 		</div>
 		<div class="rowAlign">
 			<label>Left: </label>
-			<button>Left</button>
+			<button>Default</button>
 		</div>
 		<div class="rowAlign">
 			<label>Right: </label>
-			<button>Right</button>
+			<button>Default</button>
 		</div>
 		<div class="rowAlign">
 			<label>Down: </label>
-			<button>Down</button>
+			<button>Default</button>
 		</div>
 		<div class="rowAlign">
 			<label>Soft drop: </label>
-			<button>Space</button>
+			<button>Default</button>
 		</div>
 		<div class="rowAlign">
 			<label>Hard drop: </label>
-			<button>CTRL</button>
+			<button>Default</button>
 		</div>
 		<div class="rowAlign" style="margin-bottom: 15px;">
-			<button><b>Switch player</b></button>
-			<button id="closeSet"><b>Save and close</b></button>
+			<button style="visibility: hidden;"><b>Switch player</b></button>
+			<button id="closeSet"><b>Close</b></button>
 		</div>
 	</div>
-
 	
-	<div id="gameOver" style="display: none;">
+	<div id="gameOver" class="menu" style="display: none;">
 		<b style="padding-top: 20px; font-size: 30px;">Game Over</b>
 		<div class="rowAlign">
 			<el id="endScore">Score: 20</el>

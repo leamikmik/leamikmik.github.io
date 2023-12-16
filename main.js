@@ -15,11 +15,19 @@ const musicVolume = document.getElementById("volumeSlider");
 const gameOverScreen = document.getElementById("gameOver");
 const endScore = document.getElementById("endScore");
 const endHighScore = document.getElementById("endHighScore");
+const pauseMenu = document.getElementById("pauseMenu");
 
+document.addEventListener("keydown", handleKeyPress);
 document.getElementById("restart").addEventListener("click", play);
 document.getElementById("play").addEventListener("click", play);
 document.getElementById("openSet").addEventListener("click", openSettings);
+document.getElementById("pauseSet").addEventListener("click", openSettings);
 document.getElementById("closeSet").addEventListener("click", closeSettings);
+document.getElementById("resume").addEventListener("click", function(){
+    updates = setInterval(update, getUpdateSpeed(level));
+    pauseMenu.style.display = "none";
+    active = true;
+});
 musicVolume.onchange = function(){
     music.volume = musicVolume.value/100;
     localStorage.setItem("musicVolume", musicVolume.value);
@@ -55,19 +63,39 @@ let score = 0;
 let highScore = localStorage.getItem("tetrisHighScore") || 0;
 let updates;
 let active = false;
-let controls = {
+let controls = localStorage.getItem("controls") == null ? {
     "rotate" : "ArrowUp",
     "left" : "ArrowLeft",
     "right" : "ArrowRight",
     "down" : "ArrowDown",
-    "softDrop" : "Alt",
+    "softDrop" : " ",
     "hardDrop" : "Control"
-} || JSON.parse(localStorage.getItem("controls"));
+} : JSON.parse(localStorage.getItem("controls"));
+console.log(JSON.parse(localStorage.getItem("controls")))
+let gettingKey = null;
+let playerCount;
+ 
+function getKey(i, key){
+    if(gettingKey!=null) settings.children[gettingKey[0]].children[1].innerText = controls[[gettingKey[1]]].trim().length!=0 ? controls[gettingKey[1]] : "Space";
+    gettingKey=[i, key];
+    settings.children[i].children[1].innerText = "Press key...";
+}
+
+function setKey(key){
+    console.log(key)
+    if(key!="Escape"){
+        controls[gettingKey[1]] = key; 
+    }
+    settings.children[gettingKey[0]].children[1].innerText = controls[[gettingKey[1]]].trim().length!=0 ? controls[gettingKey[1]] : "Space";
+    gettingKey=null;     
+}
 
 function openSettings(){
     let i = 3;
     for(let key in controls){
-        settings.children[i].children[1].innerText = controls[key];
+        let k = i;
+        settings.children[i].children[1].innerText = controls[key].trim().length!=0 ? controls[key] : "Space";
+        settings.children[i].children[1].addEventListener("click", function(){getKey(k, key);}, false);
         i++;
     }
     settings.style.display="";
@@ -79,6 +107,7 @@ function closeSettings(){
 }
 
 function play(){
+    playerCount = 1;
     active = true;
     gameOverScreen.style.display = "none";
     startScreen.style.display = "none";
@@ -252,7 +281,7 @@ function isValidMove(piece) {
 }
 function handleKeyPress(event) {
     //console.log(event.key);
-    if(active || event.key=="Escape")
+    if(active || event.key=="Escape"){
     switch (event.key) {
         case controls["left"]:
             if (canMove(-1, 0)) currentPiece.forEach((block) => (block[0] -= 1));
@@ -277,12 +306,19 @@ function handleKeyPress(event) {
             moveDown(1);
         break;
         case "Escape":
-            if(active) clearInterval(updates);
-            else updates = setInterval(update, getUpdateSpeed(level));
+            if(active){
+                clearInterval(updates);
+                pauseMenu.style.display = "";
+            }
+            else {
+                updates = setInterval(update, getUpdateSpeed(level));
+                pauseMenu.style.display = "none";
+            }
             active = !active;
         break;
     }
-    draw();
+    draw();}
+    if(gettingKey!=null) setKey(event.key);
 }
 
 function generatePiece() {
@@ -320,7 +356,6 @@ function startGame() {
     score = 0;
     level = 0;
     updates = setInterval(update, getUpdateSpeed(2));
-    document.addEventListener("keydown", handleKeyPress);
     levelText.value = "Level: 1";
 }
 });
